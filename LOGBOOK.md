@@ -44,3 +44,16 @@
 
 ### 4. Next Technical Step
 - Execute `gmx editconf` to define cubic boundary dimensions ($1.0\text{ nm}$ envelope) and proceed to explicit box solvation.
+markdown### 4. Boundary Definition & Unit Cell Setup (2026-07-09)
+The `gmx editconf` module was executed to establish periodic boundary conditions (PBC) for the system.
+
+- **Initial Coordinates**: 1,960 protein atoms read.
+- **Unit Cell Geometry**: Cubic (`-bt cubic`).
+- **Solvent Clearance Envelope**: $1.0 \text{ nm}$ minimum distance to box edge (`-d 1.0`).
+- **Initial Volume**: $123.38 \text{ nm}^3$.
+- **Post-Expansion Volume**: $344.48 \text{ nm}^3$ (corresponds to roughly 55,500 electrons).
+- **Calculated Box Vectors**: $7.010 \times 7.010 \times 7.010 \text{ nm}$.
+- **Geometric Centroid Shift**: System shifted to geometric center coordinates $(3.505, 3.505, 3.505 \text{ nm})$.
+
+### 5. Next Technical Step
+- Run `gmx solvate` to populate the expanded $344.48 \text{ nm}^3$ volume with explicit $SPC/E$ water molecules.
