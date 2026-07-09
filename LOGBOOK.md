@@ -44,9 +44,6 @@
 
 ### 4. Next Technical Step
 - Execute `gmx editconf` to define cubic boundary dimensions ($1.0\text{ nm}$ envelope) and proceed to explicit box solvation.
-markdown### 4. Boundary Definition & Unit Cell Setup (2026-07-09)
-The `gmx editconf` module was executed to establish periodic boundary conditions (PBC) for the system.
-
 - **Initial Coordinates**: 1,960 protein atoms read.
 - **Unit Cell Geometry**: Cubic (`-bt cubic`).
 - **Solvent Clearance Envelope**: $1.0 \text{ nm}$ minimum distance to box edge (`-d 1.0`).
