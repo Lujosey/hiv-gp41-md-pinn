@@ -24,3 +24,23 @@
 ### 3. Current Status
 - Version control environment successfully initialized.
 - Proceeding to Phase 1 data generation.
+- markdown
+- ## [2026-07-09] Phase 1: HEWL Control Topology Generation
+
+### 1. Technical Actions
+- Initialized the reference control run environment inside the local Ubuntu terminal environment.
+- Filtered crystal water coordinates (`HOH` residues) from the raw X-ray structure file using `grep`.
+- Generated the all-atom system topology mapping.
+
+### 2. Simulation Settings & Provenance
+- **Source Structure**: Hen Egg White Lysozyme (HEWL), PDB ID: `1AKI` (Legacy PDB format).
+- **Force Field Registry**: OPLS-AA/L all-atom force field (GROMACS Selection Index: `15`).
+- **Water Model**: SPC/E explicit water topology (`-water spce`).
+
+### 3. Outputs Generated
+- `1aki_clean.pdb`: Solvent-stripped structural coordinates.
+- `topol.top`: Core system topology mapping force field atom types, partial charges, and bonding networks.
+- `posre.itp`: Heavy-atom position restraint array (force constant = $1000 \text{ kJ}\cdot\text{mol}^{-1}\cdot\text{nm}^{-2}$).
+
+### 4. Next Technical Step
+- Execute `gmx editconf` to define cubic boundary dimensions ($1.0\text{ nm}$ envelope) and proceed to explicit box solvation.
