@@ -145,8 +145,127 @@ The system was relaxed through a rigorous multi-stage minimization and equilibra
     *   Thermostat / Barostat Settings: Berendsen Thermostat (303.15 K) / Berendsen Semi-Isotropic Barostat (1.0 bar)
     *   Position Restraints (k): Protein Backbone: 500, Side Chains: 200; Lipid Headgroups: 200
     *   Output Frequency: Every 50,000 steps
-
-*   **Step 6.5: NPT Equilibration (Restraint Step-Down Stage 2)**
+    *   *   **Step 6.5: NPT Equilibration (Restraint Step-Down Stage 2)**
     *   Input Coordinates / Script: `step6.4.gro` / `step6.5_equilibration.mdp`
     *   Ensemble / Algorithm: NPT / MD Integrator
-Use code with caution.*   Timestep / Duration: 2 fs / 500 ps (250,000 steps)*   Thermostat / Barostat Settings: Berendsen Thermostat (303.15 K) / Berendsen Semi-Isotropic Barostat (1.0 bar)*   Position Restraints (k): Protein Backbone: 200, Side Chains: 50; Lipid Headgroups: 40*   Output Frequency: Every 50,000 stepsStep 6.6: NPT Equilibration (Production Ensemble Transition)Input Coordinates / Script: step6.5.gro / step6.6_equilibration.mdpEnsemble / Algorithm: NPT / MD IntegratorTimestep / Duration: 2 fs / 500 ps (250,000 steps)Thermostat / Barostat Settings: Nosé-Hoover Thermostat (303.15 K, split coupling groups) / Parrinello-Rahman Semi-Isotropic Barostat (1.0 bar, \(\tau_p = 5.0\text{ ps}\), compressibility = 4.5 × 10⁻⁵ bar⁻¹)Position Restraints (k): Protein Backbone: 50, Side Chains: 0; Lipid Headgroups: 0Output Frequency: Every 50,000 stepsStep 7: Production MD Baseline RunInput Coordinates / Script: step6.6.gro / step7_production.mdpEnsemble / Algorithm: NPT / MD IntegratorTimestep / Duration: 2 fs / 10.0 ns (5,000,000 steps)Thermostat / Barostat Settings: Nosé-Hoover Thermostat (303.15 K, split groups) / Parrinello-Rahman Semi-Isotropic Barostat (1.0 bar)Position Restraints (k): None (Fully Unrestrained)Output Frequency: Every 50,000 steps (Data sampled every 100 ps, total 101 frames)📊 5. Unrestrained Trajectory Performance (10 ns Initial Stability Check)The 10 ns production phase functions strictly as an initial stability check to assess structural drift under the CHARMM36m force field, rather than as a complete biological validation.Trajectory Evaluation AveragesPost-processing calculations were carried out on the local drive using structural tracking utilities (gmx rmsd, gmx sasa, gmx energy) to pull thermodynamic metrics across the 101 saved frames:Structural Deviation (RMSD): The protein backbone reached an early-stage plateau at a mean value of 0.216 nm (reported correctly in nanometers, avoiding squared notation metrics).System Temperature: Maintained structural distribution profile centering tightly around 303.11 K.System Pressure: Fluctuated around a mean of 1.03 bar (consistent with small-system NPT noise components).Density Profile: Consolidated uniformly at an average liquid density phase of 1012.4 kg/m³.Hydrophobic Solvation Boundary (SASA): Calculated via gmx sasa. The mean solvent accessible surface area settled at 22.0 nm, confirming that the hydrophobic peptide segment remained stably shielded from full solvent contact within the lipid tails.Center-of-Mass (COM) Displacement: Tracked using a custom script (track_harpoon.py). The absolute vertical distance between the peptide COM and the POPC phosphorus bilayer reference matrix coordinates calculated out to an anchored deviation of just 0.20 Å.⚠️ Scientific Boundary Note: These trajectory calculations serve strictly as an initial equilibration and setup stability check. They do not represent a validation of full biological thermodynamic equilibrium.🤖 6. Machine Learning Regression: Stationary-Baseline Verification TestTo test data parsing protocols, a prototype machine learning pipeline was constructed using DeepXDE on top of a PyTorch mathematics backend. At this stage, this routine serves strictly as a stationary-baseline or trajectory-smoothing test to filter out thermal noise; it is insufficient to claim a force landscape or a free-energy insertion barrier.💻 Feature Extraction Configuration (prep_pinn_data.py)A custom Python parsing wrapper script was executed locally to condense the 277 explicit atoms constituting the 22-residue "Harpoon" index group into regularized space-time arrays:csv time_ps,z_dist_angstrom,rad_gyration 0.0,-0.20916824475580142,8.935861281913178 100.0,-0.4420380220125324,9.262409053916135 200.0,-0.3650672778363173,9.383931593378756 300.0,0.4072002245749218,8.991424275292758 🧠 Neural Network Infrastructure (train_gp41_pinn.py)Input Layer (X): Time (t) in picoseconds.Hidden Network Architecture: Fully connected Feed-Forward Neural Network (dde.nn.FNN) mapped across 3 layers of 20 neurons each [1, 20, 20, 20, 1], utilizing hyperbolic tangent (\(\tanh \)) activations and Glorot Normal weight initializations.Output Layer (Y): Spatial separation, Z-axis tracking distance in Angstroms.Regularization Term: Constrained via a basic first-order differential velocity check:$$\mathcal{L}_{\text{physics}} = \frac{dz}{dt} - 0 = 0$$Optimization Framework: Run across 2,000 iterations via the Adam algorithm (lr = 0.0005). The loss function converged efficiently:Final Train Loss = 6.27 × 10⁻¹Final Test Loss = 6.27 × 10⁻¹Wall Execution Time = 4.588 secondsResult Evaluation: The process generated a smoothed path configuration output (pinn_physics_baseline.png).⚠️ Model Limitation Statement: This routine functions strictly as a data-regression tracker and trajectory-smoothing baseline verification test. It is not currently parameter-mapped to calculate activation landscapes, thermodynamic free energy profiles, or force-penetration mechanics.🚀 7. Steered Molecular Dynamics (SMD) Project Strategy PlanPrior to deployment on the High-Performance Computing (HPC) parallel cluster infrastructure, a detailed Steered Molecular Dynamics (SMD) strategy has been prepared. This stage is designed to map active-force profiles rather than the stationary conditions verified locally.⚙️ Pre-Compiled Configuration Parameters (pull.mdp directives)ini pull                     = yes pull_ncoords             = 1          ; Single reaction coordinate tracking pull_ngroups             = 2          ; Pulled target and reference matrix pull_group1_name         = Harpoon    ; Target index mapping containing the 277 peptide atoms pull_group2_name         = POPC       ; Bilayer phosphorus coordinate reference matrix pull_coord1_type         = umbrella   ; Harmonic spring constraint potential pull_coord1_geometry     = distance   ; Direct coordinate vector tracking pull_coord1_dim          = N N Y      ; Axis constraint: Unidirectional pulling along Z-normal pull_coord1_groups       = 1 2        ; Pull Group 1 relative to Group 2 pull_coord1_start        = yes        ; Begin pulling from local starting position pull_coord1_rate         = 0.01       ; Velocity constraint: 0.01 nm/ps pull_coord1_k            = 1000       ; Constant spring stiffness: 1000 kJ/mol/nm^2 Pull Group, Direction, and Boundaries DefinitionPull Group: Group Harpoon (consisting of all 277 explicit atoms of the 22-residue peptide).Reference Group: Group POPC (specifically mapping the phosphorus atoms of the lipid matrix to represent the bilayer center).Pulling Direction: Unidirectional pulling along the Z-axis (membrane normal vector).Spring Constant (k): $1000 \text{ kJ}\cdot\text{mol}^{-1}\cdot\text{nm}^{-2}$.Pulling Velocity (v): $0.01 \text{ nm/ps}$.Statistical Replication Strategy: 5 independent configuration runs initialized with randomized velocity fields from frame snapshots extracted from the 10 ns baseline check trajectory.Expected Diagnostic Outputs: pullx.xvg (displacement tracking values) and pullf.xvg (force vectors over time).Success Evaluation Criteria: A calculation run will count as valid if it reveals a clean, reproducible force-extension curve that highlights a peak mechanical resistance profile without box-boundary artifacts or unphysical structural distortions.Failure Evaluation Criteria: Excessive peptide tilting that introduces lateral friction along the X/Y coordinates will classify the simulation run as unsuccessful.💻 8. Automated Verification & Logging Script (log_system_state.sh)To maintain strict reproducibility across systems, a shell script has been deployed to automatically verify directory dependencies and append environment markers directly to the log workspace:bash #!/bin/bash echo "=== PROJECT LOG: RUNNING ENVIRONMENT CHECK ===" >> project_log.txt date >> project_log.txt echo "Current directory: \$(pwd)" >> project_log.txt echo "=== TARGET FILES PRESENT ===" >> project_log.txt ls -lh step7_production.gro topol.top index.ndx pull.mdp pinn_training_data.csv >> project_log.txt echo "=== COMPUTE ENVIRONMENT DETECTED ===" >> project_log.txt python3 -c "import torch; print('PyTorch version:', torch.__version__)" >> project_log.txt python3 -c "import deepxde as dde; print('DeepXDE version:', dde.__version__)" >> project_log.txt echo "==============================================" >> project_log.txt 
+    *   Timestep / Duration: 2 fs / 500 ps (250,000 steps)
+    *   Thermostat / Barostat Settings: Berendsen Thermostat (303.15 K) / Berendsen Semi-Isotropic Barostat (1.0 bar)
+    *   Position Restraints (k): Protein Backbone: 200, Side Chains: 50; Lipid Headgroups: 40
+    *   Output Frequency: Every 50,000 steps
+
+*   **Step 6.6: NPT Equilibration (Production Ensemble Transition)**
+    *   Input Coordinates / Script: `step6.5.gro` / `step6.6_equilibration.mdp`
+    *   Ensemble / Algorithm: NPT / MD Integrator
+    *   Timestep / Duration: 2 fs / 500 ps (250,000 steps)
+    *   Thermostat / Barostat Settings: **Nosé-Hoover Thermostat** (303.15 K, split coupling groups) / **Parrinello-Rahman Semi-Isotropic Barostat** (1.0 bar, \(\tau_p = 5.0\text{ ps}\), compressibility = 4.5 × 10⁻⁵ bar⁻¹)
+    *   Position Restraints (k): Protein Backbone: 50, Side Chains: 0; Lipid Headgroups: 0
+    *   Output Frequency: Every 50,000 steps
+
+*   **Step 7: Production MD Baseline Run**
+    *   Input Coordinates / Script: `step6.6.gro` / `step7_production.mdp`
+    *   Ensemble / Algorithm: NPT / MD Integrator
+    *   Timestep / Duration: 2 fs / **10.0 ns** (5,000,000 steps)
+    *   Thermostat / Barostat Settings: **Nosé-Hoover Thermostat** (303.15 K, split groups) / **Parrinello-Rahman Semi-Isotropic Barostat** (1.0 bar)
+    *   Position Restraints (k): **None (Fully Unrestrained)**
+    *   Output Frequency: Every 50,000 steps (Data sampled every 100 ps, total 101 frames)
+
+---
+
+## 📊 5. Unrestrained Trajectory Performance (10 ns Initial Stability Check)
+
+The 10 ns production phase functions strictly as an **initial stability check** to assess structural drift under the CHARMM36m force field, rather than as a complete biological validation. 
+
+### Trajectory Evaluation Averages
+Post-processing calculations were carried out on the local drive using structural tracking utilities (`gmx rmsd`, `gmx sasa`, `gmx energy`) to pull thermodynamic metrics across the 101 saved frames:
+*   **Structural Deviation (RMSD):** The protein backbone reached an early-stage plateau at a mean value of **0.216 nm** (reported correctly in nanometers, avoiding squared notation metrics).
+*   **System Temperature:** Maintained structural distribution profile centering tightly around **303.11 K**.
+*   **System Pressure:** Fluctuated around a mean of **1.03 bar** (consistent with small-system NPT noise components).
+*   **Density Profile:** Consolidated uniformly at an average liquid density phase of **1012.4 kg/m³**.
+*   **Hydrophobic Solvation Boundary (SASA):** Calculated via `gmx sasa`. The mean solvent accessible surface area settled at **22.0 nm**, confirming that the hydrophobic peptide segment remained stably shielded from full solvent contact within the lipid tails.
+*   **Center-of-Mass (COM) Displacement:** Tracked using a custom script (`track_harpoon.py`). The absolute vertical distance between the peptide COM and the POPC phosphorus bilayer reference matrix coordinates calculated out to an anchored deviation of just **0.20 Å**.
+
+> ⚠️ **Scientific Boundary Note:** These trajectory calculations serve strictly as an initial equilibration and setup stability check. They do not represent a validation of full biological thermodynamic equilibrium.
+
+---
+
+## 🤖 6. Machine Learning Regression: Stationary-Baseline Verification Test
+
+To test data parsing protocols, a prototype machine learning pipeline was constructed using **DeepXDE** on top of a **PyTorch** mathematics backend. At this stage, this routine serves strictly as a **stationary-baseline or trajectory-smoothing test** to filter out thermal noise; it is insufficient to claim a force landscape or a free-energy insertion barrier.
+
+### 💻 Feature Extraction Configuration (`prep_pinn_data.py`)
+A custom Python parsing wrapper script was executed locally to condense the **277 explicit atoms** constituting the 22-residue "Harpoon" index group into regularized space-time arrays:
+
+```csv
+time_ps,z_dist_angstrom,rad_gyration
+0.0,-0.20916824475580142,8.935861281913178
+100.0,-0.4420380220125324,9.262409053916135
+200.0,-0.3650672778363173,9.383931593378756
+300.0,0.4072002245749218,8.991424275292758
+```
+
+### 🧠 Neural Network Infrastructure (`train_gp41_pinn.py`)
+*   **Input Layer (X):** Time (t) in picoseconds.
+*   **Hidden Network Architecture:** Fully connected Feed-Forward Neural Network (`dde.nn.FNN`) mapped across 3 layers of 20 neurons each ``, utilizing hyperbolic tangent (\(\tanh\)) activations and Glorot Normal weight initializations.
+*   **Output Layer (Y):** Spatial separation, Z-axis tracking distance in Angstroms.
+*   **Regularization Term:** Constrained via a basic first-order differential velocity check:
+    $$\mathcal{L}_{\text{physics}} = \frac{dz}{dt} - 0 = 0$$
+*   **Optimization Framework:** Run across 2,000 iterations via the Adam algorithm (lr = 0.0005). The loss function converged efficiently:
+    *   Final Train Loss = **6.27 × 10⁻¹**
+    *   Final Test Loss = **6.27 × 10⁻¹**
+    *   Wall Execution Time = **4.588 seconds**
+*   **Result Evaluation:** The process generated a smoothed path configuration output (`pinn_physics_baseline.png`). 
+
+> ⚠️ **Model Limitation Statement:** This routine functions strictly as a data-regression tracker and trajectory-smoothing baseline verification test. It is not currently parameter-mapped to calculate activation landscapes, thermodynamic free energy profiles, or force-penetration mechanics.
+
+---
+
+## 🚀 7. Steered Molecular Dynamics (SMD) Project Strategy Plan
+
+Prior to deployment on the High-Performance Computing (HPC) parallel cluster infrastructure, a detailed **Steered Molecular Dynamics (SMD)** strategy has been prepared. This stage is designed to map active-force profiles rather than the stationary conditions verified locally.
+
+### ⚙️ Pre-Compiled Configuration Parameters (`pull.mdp` directives)
+```ini
+pull                     = yes
+pull_ncoords             = 1          ; Single reaction coordinate tracking
+pull_ngroups             = 2          ; Pulled target and reference matrix
+pull_group1_name         = Harpoon    ; Target index mapping containing the 277 peptide atoms
+pull_group2_name         = POPC       ; Bilayer phosphorus coordinate reference matrix
+pull_coord1_type         = umbrella   ; Harmonic spring constraint potential
+pull_coord1_geometry     = distance   ; Direct coordinate vector tracking
+pull_coord1_dim          = N N Y      ; Axis constraint: Unidirectional pulling along Z-normal
+pull_coord1_groups       = 1 2        ; Pull Group 1 relative to Group 2
+pull_coord1_start        = yes        ; Begin pulling from local starting position
+pull_coord1_rate         = 0.01       ; Velocity constraint: 0.01 nm/ps
+pull_coord1_k            = 1000       ; Constant spring stiffness: 1000 kJ/mol/nm^2
+```
+
+### Pull Group, Direction, and Boundaries Definition
+*   **Pull Group:** Group `Harpoon` (consisting of all 277 explicit atoms of the 22-residue peptide).
+*   **Reference Group:** Group `POPC` (specifically mapping the phosphorus atoms of the lipid matrix to represent the bilayer center).
+*   **Pulling Direction:** Unidirectional pulling along the Z-axis (membrane normal vector).
+*   **Spring Constant (k):** $1000 \text{ kJ}\cdot\text{mol}^{-1}\cdot\text{nm}^{-2}$.
+*   **Pulling Velocity (v):** $0.01 \text{ nm/ps}$.
+*   **Statistical Replication Strategy:** 5 independent configuration runs initialized with randomized velocity fields from frame snapshots extracted from the 10 ns baseline check trajectory.
+*   **Expected Diagnostic Outputs:** `pullx.xvg` (displacement tracking values) and `pullf.xvg` (force vectors over time).
+*   **Success Evaluation Criteria:** A calculation run will count as valid if it reveals a clean, reproducible force-extension curve that highlights a peak mechanical resistance profile without box-boundary artifacts or unphysical structural distortions.
+*   **Failure Evaluation Criteria:** Excessive peptide tilting that introduces lateral friction along the X/Y coordinates will classify the simulation run as unsuccessful.
+
+---
+
+## 💻 8. Automated Verification & Logging Script (`log_system_state.sh`)
+
+To maintain strict reproducibility across systems, a shell script has been deployed to automatically verify directory dependencies and append environment markers directly to the log workspace:
+
+```bash
+#!/bin/bash
+echo "=== PROJECT LOG: RUNNING ENVIRONMENT CHECK ===" >> project_log.txt
+date >> project_log.txt
+echo "Current directory: \$(pwd)" >> project_log.txt
+echo "=== TARGET FILES PRESENT ===" >> project_log.txt
+ls -lh step7_production.gro topol.top index.ndx pull.mdp pinn_training_data.csv >> project_log.txt
+echo "=== COMPUTE ENVIRONMENT DETECTED ===" >> project_log.txt
+python3 -c "import torch; print('PyTorch version:', torch.__version__)" >> project_log.txt
+python3 -c "import deepxde as dde; print('DeepXDE version:', dde.__version__)" >> project_log.txt
+echo "==============================================" >> project_log.txt
+
+h version:', torch.__version__)" >> project_log.txt python3 -c "import deepxde as dde; print('DeepXDE version:', dde.__version__)" >> project_log.txt echo "==============================================" >> project_log.txt 
