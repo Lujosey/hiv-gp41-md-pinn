@@ -1,0 +1,16 @@
+ini
+; PULL CODE PARAMETERS
+pull                     = yes
+pull_ncoords             = 1          ; One pulling coordinate
+pull_ngroups             = 2          ; Group 1 (Harpoon) and Group 2 (POPC)
+pull_group1_name         = Harpoon    ; The index group you just created
+pull_group2_name         = POPC       ; The target membrane surface
+pull_coord1_type         = umbrella   ; Harmonic potential (like a virtual spring)
+pull_coord1_geometry     = distance   ; Pulling based on separation distance
+pull_coord1_dim          = N N Y      ; ONLY pull along the Z-axis (vertical insertion)
+pull_coord1_groups       = 1 2        ; Pull Group 1 relative to Group 2
+pull_coord1_start        = yes        ; Start pulling from the current 0.20 Å position
+pull_coord1_rate         = 0.01       ; Speed: 0.01 nm/ps (This is a standard research rate)
+pull_coord1_k            = 1000       ; Spring constant (kJ mol^-1 nm^-2)
+pull_nstxout             = 50         ; Output pulling position every 50 steps
+pull_nstfout             = 50         ; Output pulling force every 50 steps
