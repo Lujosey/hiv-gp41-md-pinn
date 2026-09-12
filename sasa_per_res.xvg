@@ -1,0 +1,49 @@
+# This file was created Tue Apr 14 19:41:57 2026
+# Created by:
+#           :-) GROMACS - gmx sasa, 2023.3-Ubuntu_2023.3_1ubuntu3 (-:
+# 
+# Executable:   /usr/bin/gmx
+# Data prefix:  /usr
+# Working dir:  /home/ematare/charmm-gui-7571038954/gromacs
+# Command line:
+#   gmx sasa -s step7_production.tpr -f step7_production.xtc -or sasa_per_res.xvg
+# gmx sasa is part of G R O M A C S:
+#
+# S  C  A  M  O  R  G
+#
+@    title "Area per residue over the trajectory"
+@    xaxis  label "Residue"
+@    yaxis  label "Area (nm\S2\N)"
+@TYPE xy
+@ view 0.15, 0.15, 0.75, 0.85
+@ legend on
+@ legend box on
+@ legend loctype view
+@ legend 0.78, 0.8
+@ legend length 2
+@ s0 legend "Average (nm\S2\N)"
+@ s1 legend "Standard deviation (nm\S2\N)"
+       1    1.716    0.129
+       2    1.097    0.200
+       3    0.455    0.069
+       4    1.567    0.155
+       5    0.503    0.072
+       6    0.545    0.107
+       7    0.815    0.137
+       8    1.431    0.134
+       9    1.327    0.114
+      10    0.399    0.078
+      11    1.508    0.144
+      12    0.824    0.274
+      13    0.291    0.122
+      14    0.775    0.122
+      15    0.889    0.111
+      16    0.200    0.068
+      17    1.212    0.175
+      18    0.780    0.185
+      19    1.631    0.136
+      20    0.715    0.105
+      21    0.171    0.071
+      22    0.948    0.107
+      23    0.941    0.149
+      24    1.282    0.259
