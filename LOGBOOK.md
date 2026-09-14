@@ -14,6 +14,10 @@ Keywords: Agent-Based Modelling, Computational Fluid Dynamics (CFD), Artificial 
 ## 2. Research Methodologies
 A complex web of different software tools are likely to be used, however, at this stage it is not possible to identify all of them with certain, since the project is still at an embryonic stage. Tentatively, the list and subsequent synopsis thereof will be used as a reference of departure.
 
+### Data Quality and Availability
+Acquiring high-quality, representative biological data to parameterize and validate your models can be difficult due to privacy concerns and the lack of standardization across clinical sites.
+
+
 
 
 ## 2.1 Environment Build & Core Engine Configuration
