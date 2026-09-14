@@ -11,8 +11,12 @@ markdown# 📔 Technical Lab-Book & Comprehensive Project Log: GROMACS Deploymen
 The project will utilize the unique expertise derived from mechanical engineering and CFD to accurately characterize fluid flow through complex biological microenvironments, such as the dense porous media of lymphoid tissues or mucosal linings of the genital tract. Individual cells and viral particles will be treated as discrete agents within the ABM framework, their movement and interactions dynamically informed by the underlying, physics-based flow fields derived from microscale CFD simulations. To circumvent the high computational cost and time constraints associated with extensive CFD modeling, the research will incorporate advanced Artificial Intelligence (AI) techniques, specifically leveraging Physics-Informed Neural Networks (PINNs) as high-speed surrogate models.
 Keywords: Agent-Based Modelling, Computational Fluid Dynamics (CFD), Artificial Intelligence (AI), Physics-Informed Neural Networks (PINNs), Digital Twin, Biomechanics, Viral Transport Dynamics, Computational Immunology.
 
+## 2. Research Methodologies
+A complex web of different software tools are likely to be used, however, at this stage it is not possible to identify all of them with certain, since the project is still at an embryonic stage. Tentatively, the list and subsequent synopsis thereof will be used as a reference of departure.
 
-## 2. Environment Build & Core Engine Configuration
+
+
+## 2.1 Environment Build & Core Engine Configuration
 
 To establish a stable high-performance computing baseline on Windows 11 without native compilation conflicts, a sandboxed Linux subsystem environment was deployed.
 
@@ -42,7 +46,7 @@ GROMACS environment and PyTorch machine learning dependencies confirmed active. 
 
 ---
 
-## 3. Sandbox Verification Run: HEWL Processing & Path Troubleshooting
+## 2.3 Sandbox Verification Run: HEWL Processing & Path Troubleshooting
 
 Before deploying the primary gp41 membrane workspace, a validation study was executed using Hen Egg-White Lysozyme (PDB ID: 1AKI) to verify file handling, cleaning scripts, and the `pdb2gmx` topology parser.
 
@@ -63,9 +67,9 @@ Configured utilizing **Option 15 (OPLS-AA/L all-atom force field)** paired with 
 
 ---
 
-## 4. Targeted Simulation Framework: HIV-1 gp41 Fusion Peptide System Architecture
+## 2.4 Targeted Simulation Framework: HIV-1 gp41 Fusion Peptide System Architecture
 
-### 4.1 Molecular System Parameters
+### 2.4.1 Molecular System Parameters
 *   **Simulated Construct:** HIV-1 gp41 **Fusion Peptide (FP)** segment.
 *   **Source Structure:** Solution NMR structure (**PDB ID: 2PJV**, originally bound to DPC micelles).
 *   **Residue Range & Sequence:** Residues 1–22; Primary Sequence: `AVGIGALFLGFGAAGSTMGARS`.
@@ -73,7 +77,7 @@ Configured utilizing **Option 15 (OPLS-AA/L all-atom force field)** paired with 
 *   **Initial Membrane Orientation:** The longitudinal helical axis of the peptide was oriented parallel to the membrane normal (Z-axis).
 *   **Peptide Placement:** The construct was **pre-inserted** symmetrically into the center of the hydrophobic core of the lipid bilayer during coordinate generation via CHARMM-GUI.
 
-### 4.2 Membrane & Force-Field Specification
+### 2.4.2 Membrane & Force-Field Specification
 *   **Preparation Tool:** CHARMM-GUI Membrane Builder.
 *   **Force Field Registry:** **CHARMM36m** (explicitly port-optimized for coupled lipid-protein interfacial boundaries).
 *   **Lipid Matrix Composition:** Pure, symmetrical **1-palmitoyl-2-oleoyl-sn-glycero-3-phosphocholine (POPC)** bilayer matrix.
@@ -83,7 +87,7 @@ Configured utilizing **Option 15 (OPLS-AA/L all-atom force field)** paired with 
 *   **Initial Box Dimensions:** Orthorhombic cell geometry (X × Y × Z ≈ 7.2 nm × 7.2 nm × 10.1 nm).
 *   **Total System Size:** **41,893 explicit atoms**.
 
-### 4.3 Mandatory Non-Bonded `.mdp` Configuration Parameters for CHARMM36m Bilayers
+### 2.4.3 Mandatory Non-Bonded `.mdp` Configuration Parameters for CHARMM36m Bilayers
 To prevent artificial membrane distortion or structural artifacts, the non-bonded force-switching parameters in GROMACS strictly replicate native CHARMM formatting. The following parameter blocks are established for the minimization and equilibration runs:
 
 ```ini
@@ -99,11 +103,11 @@ DispCorr         = no          ; Long-range dispersion corrections must be off f
 
 ---
 
-## 5. Chronological Execution Logs & Stepwise Equilibration Phase Tracking
+## 2.5 Chronological Execution Logs & Stepwise Equilibration Phase Tracking
 
 The system was relaxed through a rigorous multi-stage minimization and equilibration sequence prior to the production stage to allow the lipid tails to pack around the newly introduced peptide helix.
 
-### 5.1 Granular Step-by-Step Simulation Protocol Breakdown
+### 2.5.1 Granular Step-by-Step Simulation Protocol Breakdown
 
 *   **Step 6.0: Energy Minimization (EM)**
     *   Input Coordinates / Script: `step5_input.gro` / `step6.0_minimization.mdp`
@@ -176,7 +180,7 @@ The system was relaxed through a rigorous multi-stage minimization and equilibra
 
 ---
 
-## 6. Unrestrained Trajectory Performance (10 ns Initial Stability Check)
+## 2.6 Unrestrained Trajectory Performance (10 ns Initial Stability Check)
 
 The 10 ns production phase functions strictly as an **initial stability check** to assess structural drift under the CHARMM36m force field, rather than as a complete biological validation. 
 
@@ -189,15 +193,15 @@ Post-processing calculations were carried out on the local drive using structura
 *   **Hydrophobic Solvation Boundary (SASA):** Calculated via `gmx sasa`. The mean solvent accessible surface area settled at **22.0 nm**, confirming that the hydrophobic peptide segment remained stably shielded from full solvent contact within the lipid tails.
 *   **Center-of-Mass (COM) Displacement:** Tracked using a custom script (`track_harpoon.py`). The absolute vertical distance between the peptide COM and the POPC phosphorus bilayer reference matrix coordinates calculated out to an anchored deviation of just **0.20 Å**.
 
-> ⚠️ **Scientific Boundary Note:** These trajectory calculations serve strictly as an initial equilibration and setup stability check. They do not represent a validation of full biological thermodynamic equilibrium.
+>    **Scientific Boundary Note:** These trajectory calculations serve strictly as an initial equilibration and setup stability check. They do not represent a validation of full biological thermodynamic equilibrium.
 
 ---
 
-## 7. Machine Learning Regression: Stationary-Baseline Verification Test
+## 2.7 Machine Learning Regression: Stationary-Baseline Verification Test
 
 To test data parsing protocols, a prototype machine learning pipeline was constructed using **DeepXDE** on top of a **PyTorch** mathematics backend. At this stage, this routine serves strictly as a **stationary-baseline or trajectory-smoothing test** to filter out thermal noise; it is insufficient to claim a force landscape or a free-energy insertion barrier.
 
-### 💻 Feature Extraction Configuration (`prep_pinn_data.py`)
+### Feature Extraction Configuration (`prep_pinn_data.py`)
 A custom Python parsing wrapper script was executed locally to condense the **277 explicit atoms** constituting the 22-residue "Harpoon" index group into regularized space-time arrays:
 
 ```csv
@@ -220,11 +224,11 @@ time_ps,z_dist_angstrom,rad_gyration
     *   Wall Execution Time = **4.588 seconds**
 *   **Result Evaluation:** The process generated a smoothed path configuration output (`pinn_physics_baseline.png`). 
 
-> ⚠️ **Model Limitation Statement:** This routine functions strictly as a data-regression tracker and trajectory-smoothing baseline verification test. It is not currently parameter-mapped to calculate activation landscapes, thermodynamic free energy profiles, or force-penetration mechanics.
+>   **Model Limitation Statement:** This routine functions strictly as a data-regression tracker and trajectory-smoothing baseline verification test. It is not currently parameter-mapped to calculate activation landscapes, thermodynamic free energy profiles, or force-penetration mechanics.
 
 ---
 
-## 8. Steered Molecular Dynamics (SMD) Project Strategy Plan
+## 2.8 Steered Molecular Dynamics (SMD) Project Strategy Plan
 
 Prior to deployment on the High-Performance Computing (HPC) parallel cluster infrastructure, a detailed **Steered Molecular Dynamics (SMD)** strategy has been prepared. This stage is designed to map active-force profiles rather than the stationary conditions verified locally.
 
@@ -257,7 +261,7 @@ pull_coord1_k            = 1000       ; Constant spring stiffness: 1000 kJ/mol/n
 
 ---
 
-## 9. Automated Verification & Logging Script (`log_system_state.sh`)
+## 2.9 Automated Verification & Logging Script (`log_system_state.sh`)
 
 To maintain strict reproducibility across systems, a shell script has been deployed to automatically verify directory dependencies and append environment markers directly to the log workspace:
 
