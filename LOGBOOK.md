@@ -15,14 +15,24 @@ Keywords: Agent-Based Modelling, Computational Fluid Dynamics (CFD), Artificial 
 A complex web of different software tools are likely to be used, however, at this stage it is not possible to identify all of them with certain, since the project is still at an embryonic stage. Tentatively, the list and subsequent synopsis thereof will be used as a reference of departure.
 
 ### Data Quality and Availability
-Acquiring high-quality, representative biological data to parameterize and validate your models can be difficult due to privacy concerns and the lack of standardization across clinical sites.
+Acquiring high-quality, representative biological data to parameterize and validate the models can be difficult due to privacy concerns and the lack of standardization across clinical sites.
+### Model Validation and Reproducibility 
+Because the research is novel, established benchmarks might be limited. Demonstrating that the model's predictions are physically accurate, biologically plausible, and reproducible will be a major but crucial task.
+### Molecular Dynamics (MD) Engine
+Used to run the large-scale physical simulations of the gp41 trimer refolding and striking the lipid bilayer, producing trajectories, force profiles, and conformation states over hundreds of nanoseconds
 
-
+### Machine Learning & PIIN Framework
+The PINN will need source of data to enable the rationalisation of the problem in “real world” and can be achieved by extraction of AA23 FP tip relative to the phosphate plane using All-Atom Molecular Dynamics trajectories. The splaying labelling is then done to the frames from the simulation to mark the bouncing as “Failed Contact” or otherwise “Successful Insertion” It is also important to calculate the Solvent Accessible Surface Area for each timestep of the projectile because this informs the PINN the exact time the water cage breaks (Ceriotti, et al., 2016).
 
 
 ## 2.1 Environment Build & Core Engine Configuration
 
 To establish a stable high-performance computing baseline on Windows 11 without native compilation conflicts, a sandboxed Linux subsystem environment was deployed.
+
+### GROMACS Software
+Groningen Machine for Chemical Simulations (GROMACS) is an open source molecular dynamics (MD) software used to computationally simulate Newtonian motion equations for systems in drug discovery field and several other bio-chemical computations.
+GROMACS is one the fastest and most versatile MD engines on the market, which uses Single Instruction, Multiple Data (SIMD) intrinsics to support homogenous acceleration on different GPU platforms, mainly optimised for simulations of proteins, lipids and nucleic acids.
+The software support several major force fields including CHARMM, which was used in this research work. It also comes with large libraries of command line tools for trajectory analysis of RMSD/RMSF calculations, hydrogen bond analysis, and free energy estimate.
 
 ### Environment Specification
 *   **Subsystem Layer:** Windows Subsystem for Linux (WSL2)
@@ -53,6 +63,7 @@ GROMACS environment and PyTorch machine learning dependencies confirmed active. 
 ## 2.3 Sandbox Verification Run: HEWL Processing & Path Troubleshooting
 
 Before deploying the primary gp41 membrane workspace, a validation study was executed using Hen Egg-White Lysozyme (PDB ID: 1AKI) to verify file handling, cleaning scripts, and the `pdb2gmx` topology parser.
+After successfully downloading the 1AK1 lysozyme from the RCSB repository, it was cleaned  to strip crystal waters type. This process removes background water molecules which were frozen in the of original protein structure when the x ray was taken. These molecules adversely affect the experiment equilibrium and cause crash due to high local forces, and mixed water modes can upset the energy minimisation steps by reducing protein relaxation. They also change system sizes and charge constraints, it is ideal to start afresh knowing the exact number of molecules and ions in the experiment especially for the solvation step
 
 ### Technical Hurdles & Directory Fixes
 1.  **Automated Download Failure:** Standard terminal fetching commands (`wget`) pulled the web interface wrapper (HTML) rather than the raw structural text stream. This caused a fatal error downstream: `Fatal error: An input file contains a line longer than 4096 characters... in fgets2`.
@@ -61,7 +72,9 @@ Before deploying the primary gp41 membrane workspace, a validation study was exe
 ### Commands & Processing Pipeline
 ```bash
 mkdir lysozyme_tutorial && cd lysozyme_tutorial
-cp /mnt/c/Users/ematare.AIRCON/Downloads/1AKI.pdb .
+cp /mnt/c/Users/ematare/Downloads/1AKI.pdb .
+
+The original file has "crystal waters" (labeled HOH) that we need to remove before we start. Use this command to create a "clean" version: 1
 grep -v HOH 1AKI.pdb > 1AKI_clean.pdb
 gmx pdb2gmx -f 1AKI_clean.pdb -o 1AKI_processed.gro -water spce -ff oplsaa
 ```
